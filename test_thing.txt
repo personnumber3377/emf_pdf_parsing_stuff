@@ -1,0 +1,305 @@
+0 1
+UndefinedSpace1 (variable, optional)
+...
+BmiSrc (variable)
+97 / 282
+[MS-EMF] - v20240423
+Enhanced Metafile Format
+Copyright © 2024 Microsoft Corporation
+Release: April 23, 2024
+...
+UndefinedSpace2 (variable, optional)
+...
+BitsSrc (variable)
+...
+BmiSrc (variable): The source bitmap header.
+BitsSrc (variable): The source bitmap bits.
+See section 2.3.1 for more bitmap record types.
+2.3.1.7 EMR_STRETCHDIBITS Record
+The EMR_STRETCHDIBITS record specifies a block transfer of pixels from a source bitmap to a
+destination rectangle, optionally in combination with a brush pattern, according to a specified raster
+operation, stretching or compressing the output to fit the dimensions of the destination, if necessary.
+Fields not specified in this section are specified in section 2.3.1.
+0 1 2 3 4 5 6 7 8 9
+1
+0 1 2 3 4 5 6 7 8 9
+2
+0 1 2 3 4 5 6 7 8 9
+3
+0 1
+Type
+Size
+Bounds
+...
+...
+...
+xDest
+yDest
+xSrc
+ySrc
+cxSrc
+cySrc
+98 / 282
+[MS-EMF] - v20240423
+Enhanced Metafile Format
+Copyright © 2024 Microsoft Corporation
+Release: April 23, 2024
+offBmiSrc
+cbBmiSrc
+offBitsSrc
+cbBitsSrc
+UsageSrc
+BitBltRasterOperation
+cxDest
+cyDest
+BitmapBuffer (variable)
+...
+Type (4 bytes): An unsigned integer that identifies this record type as EMR_STRETCHDIBITS. This
+value is 0x00000051.
+Bounds (16 bytes): A RectL object ([MS-WMF] section 2.2.2.19) that specifies the destination
+bounding rectangle in logical coordinates. If the intersection of this rectangle with the current
+clipping regions (section 3.1.1.2.1) in the playback device context (section 3.1) is empty, this
+record has no effect.
+xDest (4 bytes): A signed integer that specifies the logical x-coordinate of the upper-left corner of
+the destination rectangle.
+yDest (4 bytes): A signed integer that specifies the logical y-coordinate of the upper-left corner of
+the destination rectangle.
+xSrc (4 bytes): A signed integer that specifies the x-coordinate in pixels of the upper-left corner of
+the source rectangle.
+ySrc (4 bytes): A signed integer that specifies the y-coordinate in pixels of the upper-left corner of
+the source rectangle.
+cxSrc (4 bytes): A signed integer that specifies the width in pixels of the source rectangle.
+cySrc (4 bytes): A signed integer that specifies the height in pixels of the source rectangle.
+offBmiSrc (4 bytes): An unsigned integer that specifies the offset in bytes from the start of this
+record to the source bitmap header.
+cbBmiSrc (4 bytes): An unsigned integer that specifies the size in bytes, of the source bitmap
+header.
+offBitsSrc (4 bytes): An unsigned integer that specifies the offset in bytes, from the start of this
+record to the source bitmap bits.
+cbBitsSrc (4 bytes): An unsigned integer that specifies the size in bytes, of the source bitmap bits.
+99 / 282
+[MS-EMF] - v20240423
+Enhanced Metafile Format
+Copyright © 2024 Microsoft Corporation
+Release: April 23, 2024
+UsageSrc (4 bytes): An unsigned integer that specifies how to interpret values in the color table in
+the source bitmap header. This value is in the DIBColors enumeration (section 2.1.9).
+BitBltRasterOperation (4 bytes): An unsigned integer that specifies a raster operation code. These
+codes define how the color data of the source rectangle is to be combined with the color data of
+the destination rectangle and optionally a brush pattern, to achieve the final color.
+This value is in the Ternary Raster Operation enumeration ([MS-WMF] section 2.1.1.31).
+cxDest (4 bytes): A signed integer that specifies the logical width of the destination rectangle.
+cyDest (4 bytes): A signed integer that specifies the logical height of the destination rectangle.
+BitmapBuffer (variable): A buffer containing the source bitmap, which is not required to be
+contiguous with the fixed portion of the EMR_STRETCHDIBITS record. Thus, fields in this buffer
+that are labeled "UndefinedSpace" are optional and MUST be ignored.
+If the raster operation specified by BitBltRasterOperation does not require a source bitmap, the
+source bitmap can be omitted.
+0 1 2 3 4 5 6 7 8 9
+1
+0 1 2 3 4 5 6 7 8 9
+2
+0 1 2 3 4 5 6 7 8 9
+3
+0 1
+UndefinedSpace1 (variable, optional)
+...
+BmiSrc (variable)
+...
+UndefinedSpace2 (variable, optional)
+...
+BitsSrc (variable)
+...
+BmiSrc (variable): The source bitmap header.
+BitsSrc (variable): The source bitmap bits.
+This record supports source images in JPEG and PNG formats. The Compression field in the source
+bitmap header specifies the image format.
+If the signs of the source and destination height and width fields differ, this record specifies a mirrorimage copy of the source bitmap to the destination. That is, if cxSrc and cxDest have different signs,
+a mirror image of the source bitmap along the x-axis is specified. If cySrc and cyDest have different
+signs, a mirror image of the source bitmap along the y-axis is specified.
+See section 2.3.1 for more bitmap record types.
+100 / 282
+[MS-EMF] - v20240423
+Enhanced Metafile Format
+Copyright © 2024 Microsoft Corporation
+Release: April 23, 2024
+2.3.1.8 EMR_TRANSPARENTBLT Record
+The EMR_TRANSPARENTBLT record specifies a block transfer of pixels from a source bitmap to a
+destination rectangle, treating a specified color as transparent, stretching or compressing the output
+to fit the dimensions of the destination, if necessary.<58>
+Fields not specified in this section are specified in section 2.3.1.
+0 1 2 3 4 5 6 7 8 9
+1
+0 1 2 3 4 5 6 7 8 9
+2
+0 1 2 3 4 5 6 7 8 9
+3
+0 1
+Type
+Size
+Bounds
+...
+...
+...
+xDest
+yDest
+cxDest
+cyDest
+TransparentColor
+xSrc
+ySrc
+XformSrc (24 bytes)
+...
+...
+...
+BkColorSrc
+UsageSrc
+offBmiSrc
+101 / 282
+[MS-EMF] - v20240423
+Enhanced Metafile Format
+Copyright © 2024 Microsoft Corporation
+Release: April 23, 2024
+cbBmiSrc
+offBitsSrc
+cbBitsSrc
+cxSrc
+cySrc
+BitmapBuffer (variable)
+...
+Type (4 bytes): An unsigned integer that identifies this record type as EMR_TRANSPARENTBLT.
+This value is 0x00000074.
+Bounds (16 bytes): A RectL object ([MS-WMF] section 2.2.2.19) that specifies the destination
+bounding rectangle in logical coordinates. If the intersection of this rectangle with the current
+clipping regions (section 3.1.1.2.1) in the playback device context (section 3.1) is empty, this
+record has no effect.
+xDest (4 bytes): A signed integer that specifies the logical x-coordinate of the upper-left corner of
+the destination rectangle.
+yDest (4 bytes): A signed integer that specifies the logical y-coordinate of the upper-left corner of
+the destination rectangle.
+cxDest (4 bytes): A signed integer that specifies the logical width of the destination rectangle.
+cyDest (4 bytes): A signed integer that specifies the logical height of the destination rectangle.
+TransparentColor (4 bytes): A ColorRef object ([MS-WMF] section 2.2.2.8) that specifies the color
+in the source bitmap to be treated as transparent.
+xSrc (4 bytes): A signed integer that specifies the logical x-coordinate of the upper-left corner of the
+source rectangle.
+ySrc (4 bytes): A signed integer that specifies the logical y-coordinate of the upper-left corner of the
+source rectangle.
+XformSrc (24 bytes): An XForm object (section 2.2.28) that specifies a world-space to pagespace transform to apply to the source bitmap.
+BkColorSrc (4 bytes): A ColorRef object that specifies the background color of the source bitmap.
+UsageSrc (4 bytes): An unsigned integer that specifies how to interpret values in the color table in
+the source bitmap header. This value is in the DIBColors enumeration (section 2.1.9).
+offBmiSrc (4 bytes): An unsigned integer that specifies the offset in bytes, from the start of this
+record to the source bitmap header.
+cbBmiSrc (4 bytes): An unsigned integer that specifies the size in bytes, of the source bitmap
+header.
+offBitsSrc (4 bytes): An unsigned integer that specifies the offset in bytes, from the start of this
+record to the source bitmap bits.
+102 / 282
+[MS-EMF] - v20240423
+Enhanced Metafile Format
+Copyright © 2024 Microsoft Corporation
+Release: April 23, 2024
+cbBitsSrc (4 bytes): An unsigned integer that specifies the size in bytes, of the source bitmap bits.
+cxSrc (4 bytes): A signed integer that specifies the logical width of the source rectangle.
+cySrc (4 bytes): A signed integer that specifies the logical height of the source rectangle.
+BitmapBuffer (variable): A buffer containing the source bitmap, which is not required to be
+contiguous with the fixed portion of the EMR_TRANSPARENTBLT record. Thus, fields in this buffer
+that are labeled "UndefinedSpace" are optional and MUST be ignored.
+If the source bitmap color format is 32 bits-per-pixel, only the alpha transparency value in each
+pixel SHOULD be copied to the destination.<59>
+0 1 2 3 4 5 6 7 8 9
+1
+0 1 2 3 4 5 6 7 8 9
+2
+0 1 2 3 4 5 6 7 8 9
+3
+0 1
+UndefinedSpace1 (variable, optional)
+...
+BmiSrc (variable)
+...
+UndefinedSpace2 (variable, optional)
+...
+BitsSrc (variable)
+...
+BmiSrc (variable): The source bitmap header.
+BitsSrc (variable): The source bitmap bits.
+See section 2.3.1 for more bitmap record types.
+2.3.2 Clipping Record Types
+The Clipping record types define and manage clipping regions. The clipping regions used by clipping
+record types are part of the Regions state element (section 3.1.1.2.1) in the playback device
+context (section 3.1).
+Note: The EMR_SETMETARGN record does not specify parameters.
+The following are the clipping record types.
+Name Section Description
+EMR_EXCLUDECLIPRECT 2.3.2.1 Specifies a clipping region that consists of the current clipping region
+minus the specified rectangle.
+EMR_EXTSELECTCLIPRGN 2.3.2.2 Combines the specified region with the current clipping region, using the
+specified mode.
+103 / 282
+[MS-EMF] - v20240423
+Enhanced Metafile Format
+Copyright © 2024 Microsoft Corporation
+Release: April 23, 2024
+Name Section Description
+EMR_INTERSECTCLIPRECT 2.3.2.3 Specifies a clipping region from the intersection of the current clipping
+region and the specified rectangle.
+EMR_OFFSETCLIPRGN 2.3.2.4 Specifies a clipping region as the current clipping region moved by a
+specified offset.
+EMR_SELECTCLIPPATH 2.3.2.5 Specifies a clipping region as the current clipping region combined with
+the current path bracket, using the specified mode.
+EMR_SETMETARGN 2.3.2 If the current metaregion is null, it is set to the current clipping region.
+Otherwise, the current metaregion is intersected with the current clipping
+region, and the result is the new metaregion.
+After the operation, the current clipping region is set to null.
+During playback, drawing occurs only within the intersection of the
+metaregion and clipping region.
+This EMF record specifies no parameters.
+The generic structure of clipping records is specified as follows.
+0 1 2 3 4 5 6 7 8 9
+1
+0 1 2 3 4 5 6 7 8 9
+2
+0 1 2 3 4 5 6 7 8 9
+3
+0 1
+Type
+Size
+ClippingRecordBuffer (variable, optional)
+...
+Type (4 bytes): An unsigned integer that defines the type of record. The clipping record types are
+listed in the following table. See the preceding table for descriptions of these record types.
+Name Value
+EMR_OFFSETCLIPRGN 0x0000001A
+EMR_SETMETARGN 0x0000001C
+EMR_EXCLUDECLIPRECT 0x0000001D
+EMR_INTERSECTCLIPRECT 0x0000001E
+EMR_SELECTCLIPPATH 0x00000043
+EMR_EXTSELECTCLIPRGN 0x0000004B
+Size (4 bytes): An unsigned integer that specifies the size in bytes of this record in the metafile.
+This value MUST be a multiple of 4 bytes.
+ClippingRecordBuffer (variable, optional): An array of bytes that contains the data for the
+clipping record. The size of this field is a multiple of 4 bytes.
+The EMR_SETMETARGN record does not contain this field.
+104 / 282
+[MS-EMF] - v20240423
+Enhanced Metafile Format
+Copyright © 2024 Microsoft Corporation
+Release: April 23, 2024
+0 1 2 3 4 5 6 7 8 9
+1
+0 1 2 3 4 5 6 7 8 9
+2
+0 1 2 3 4 5 6 7 8 9
+3
+0 1
+ClippingRecordParm (variable)
+...
+AlignmentPadding (variable, optional)
+...
+ClippingRecordParm (variable): An array of bytes that contains the parameters for the clipping
+record.
+AlignmentPadding (variable, optional): An array of up to 3 bytes that pads the record so that
+its total size is a multiple of 4 bytes. This field MUST be ignored.
+See section 2.3 for more EMF record types.
