@@ -935,7 +935,7 @@ class EMR_OFFSETCLIPRGN:
 class EMR_SELECTCLIPPATH:
     format = ['4b', '4b', '4b']
     name = "EMR_SELECTCLIPPATH"
-    has_variable = False
+    has_variable = True
     fields = ['Type', 'Size', 'RegionMode'] # These are the fields of this object.
     variable_data = None
     def __init__(self, data):
@@ -1012,7 +1012,7 @@ class EMR_SELECTCLIPPATH:
 class EMR_COMMENT:
     format = ['4b', '4b']
     name = "EMR_COMMENT"
-    has_variable = False
+    has_variable = True
     fields = ['Type', 'Size'] # These are the fields of this object.
     variable_data = None
     def __init__(self, data):
@@ -4246,7 +4246,7 @@ class EMR_STROKEANDFILLPATH:
 class EMR_STROKEPATH:
     format = ['4b', '4b', '16b']
     name = "EMR_STROKEPATH"
-    has_variable = False
+    has_variable = True
     fields = ['Type', 'Size', 'Bounds'] # These are the fields of this object.
     variable_data = None
     def __init__(self, data):
@@ -5863,7 +5863,7 @@ class EMR_SETPALETTEENTRIES:
 class EMR_GLSBOUNDEDRECORD:
     format = ['4b', '4b', '16b', '4b']
     name = "EMR_GLSBOUNDEDRECORD"
-    has_variable = False
+    has_variable = True
     fields = ['Type', 'Size', 'Bounds', 'cbData'] # These are the fields of this object.
     variable_data = None
     def __init__(self, data):
@@ -5940,7 +5940,7 @@ class EMR_GLSBOUNDEDRECORD:
 class EMR_GLSRECORD:
     format = ['4b', '4b', '4b']
     name = "EMR_GLSRECORD"
-    has_variable = False
+    has_variable = True
     fields = ['Type', 'Size', 'cbData'] # These are the fields of this object.
     variable_data = None
     def __init__(self, data):

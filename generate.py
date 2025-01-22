@@ -14,7 +14,6 @@ def fixup_stuff(struct_format, fields): # This looks at the struct format and fi
     assert isinstance(fields, list)
 
     assert len(struct_format) == len(fields)
-    print("Fields before: "+str(fields))
     if "Type" in fields:
         # Remove the Type and the corresponding struct thing
         ind = fields.index("Type")
@@ -29,7 +28,7 @@ def fixup_stuff(struct_format, fields): # This looks at the struct format and fi
         fields.pop(ind)
         struct_format.pop(ind)
     
-    print("Fields after: "+str(fields))
+
 
     assert len(struct_format) == len(fields)
     assert "Size" not in fields and "Type" not in fields
@@ -56,20 +55,18 @@ def gen_python_code(struct_format, fields, name, has_variable):
     #assert fields != [] or has_variable
     # STRUCT_FORMAT is struct_format and FIELDS is fields in the template.
 
-    print("Bullshit before...")
-    print("Name: "+str(name))
-    print("Here is the struct format: "+str(struct_format))
-    print("Here is the fields: "+str(fields))
-
     struct_format, fields = fixup_stuff(struct_format, fields)
-    print("Bullshit after...")
-    print("Name: "+str(name))
-    print("Here is the struct format: "+str(struct_format))
-    print("Here is the fields: "+str(fields))
     data = data.replace("STRUCT_FORMAT", struct_format)
     data = data.replace("FIELDS", fields)
     data = data.replace("NAME", name)
     data = data.replace("HAS_VARIABLE", has_variable)
+    if name == "EMR_COMMENT":
+        # print("poopfuck")
+        fh = open("poopfuck.txt", "w")
+        fh.write(data)
+        fh.close()
+        assert has_variable
+    
     return data
 
 def save_code(code_string):
@@ -97,7 +94,7 @@ def to_unsigned(byte_integer: int) -> int: # Converts a signed integer in a sing
     # field_regex = re.compile(r"(\w+)\s+(\w+);")
     record_regex = re.compile(r"^\d+\.\d+\.\d+\.\d+ \S+ Record$")
     bytes_field_regex = re.compile(r'\w+\s\(\d+\sbytes\):') # This is for fixed length fields...
-    variable_field_regex = re.compile(r'\w+\s\(variable\):') # This is for fixed length fields...
+    variable_field_regex = re.compile(r'\w+\s\(variable') # This is for fixed length fields...
 
     lines = contents.splitlines()
     line_ind = 0
@@ -116,6 +113,12 @@ def to_unsigned(byte_integer: int) -> int: # Converts a signed integer in a sing
     while True:
 
 
+        if line_ind == len(lines):
+            code = gen_python_code(str(struct_format), str(fields), name_of_rec, str(has_variable))
+            save_code(code)
+            output += code + "\n\n" # Add a couple of newlines just to be safe
+            break
+
         line = lines[line_ind]
         tok = line.split(" ")
         
@@ -128,11 +131,7 @@ def to_unsigned(byte_integer: int) -> int: # Converts a signed integer in a sing
             output += code + "\n\n" # Add a couple of newlines just to be safe
             break
 
-        if line_ind == len(lines):
-            code = gen_python_code(str(struct_format), str(fields), name_of_rec, str(has_variable))
-            save_code(code)
-            output += code + "\n\n" # Add a couple of newlines just to be safe
-            break
+        
         
         # Process the header line by line
         #for line in header.splitlines():
@@ -163,8 +162,8 @@ def to_unsigned(byte_integer: int) -> int: # Converts a signed integer in a sing
                 # print("Name of rec: "+str(name_of_rec))
 
             elif len(line) >= len("2.3.4.2") and line[1] == "." and line[3] == "." and line[5] == "." and "Record Types" in line: # This is to fix the bug in the parser when it encounters "2.3.4.2 EMR_HEADER Record Types"
-                print("Not in record.")
-                print("Previous record name: "+str(name_of_rec))
+                #print("Not in record.")
+                #print("Previous record name: "+str(name_of_rec))
                 in_rec = False
 
 
@@ -202,10 +201,11 @@ def to_unsigned(byte_integer: int) -> int: # Converts a signed integer in a sing
                     length = int(tok[1][1:])
                     # print("Length: "+str(length))
                     struct_format.append(str(length)+"b") # b for bytes.
-                    print("Here is a field: "+str(tok[0]))
-                    print("Line index: "+str(line_ind))
+                    #print("Here is a field: "+str(tok[0]))
+                    #print("Line index: "+str(line_ind))
                     fields.append(tok[0])
                 elif variable_field_regex.search(line):
+                    #print("Line: "+str(line)+" WAS a variable thing")
                     has_variable = True # Add variable stuff.
 
         '''
@@ -242,7 +242,7 @@ def gen_parsers(filename: str) -> None:
     fh = open(filename, "r")
     data = fh.read()
     fh.close()
-    print(spec_to_python(data))
+    spec_to_python(data)
     # Save the manual shit....
     save_manual_input()
     return
