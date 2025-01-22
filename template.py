@@ -9,10 +9,10 @@ class NAME:
         for f in self.format:
             unpacked.append(struct.unpack(f, data[:struct.calcsize(f)]))
             data = data[struct.calcsize(f):]
-        print("unpacked: ")
-        print(unpacked)
+        #print("unpacked: ")
+        #print(unpacked)
         for field, value in zip(self.fields, unpacked):
-            print("value == "+str(value))
+            #print("value == "+str(value))
             if isinstance(value, tuple): # This is a multibyte value.
                 # Should be integers all
                 # Convert to unsigned bytes...
@@ -29,9 +29,12 @@ class NAME:
                 assert value >= 0 and value <= 255 
                 setattr(self, field, (1, value)) # Size of one byte
         self.remaining_data = data[struct.calcsize("".join(self.format)):]
-        print("Here is the size thing: "+str(struct.calcsize("".join(self.format))))
+        #print("Here is the size thing: "+str(struct.calcsize("".join(self.format))))
         # return self.remaining_data # Return the remaining data after reading the header.
         # Sanity checking. If the record doesn't have variable fields, then all of the data should be consumed. Otherwise this is an error condition.
+        print("Here is self.name: "+str(self.name))
+        print("Here is self.has_variable: "+str(self.has_variable))
+        print("Here is self.remaining_data: "+str(self.remaining_data))
         if not self.has_variable and self.remaining_data: # There is left over data even though record should not be variable.
             assert False
         if self.has_variable:

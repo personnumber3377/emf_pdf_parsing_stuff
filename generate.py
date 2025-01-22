@@ -41,6 +41,13 @@ def fixup_stuff(struct_format, fields): # This looks at the struct format and fi
     return str(struct_format), str(fields)
 
 def gen_python_code(struct_format, fields, name, has_variable):
+    if not name:
+        return ""
+    # Hardcoded check for the EMR_ string. If it doesn't exist in the name, then something bad happened.
+    if "EMR_" not in name:
+        print("Invalid class name: "+str(name))
+        assert False
+
     fh = open("template.py", "r")
     data = fh.read()
     fh.close()
@@ -49,7 +56,13 @@ def gen_python_code(struct_format, fields, name, has_variable):
     #assert fields != [] or has_variable
     # STRUCT_FORMAT is struct_format and FIELDS is fields in the template.
 
+    print("Bullshit before...")
+    print("Name: "+str(name))
+    print("Here is the struct format: "+str(struct_format))
+    print("Here is the fields: "+str(fields))
+
     struct_format, fields = fixup_stuff(struct_format, fields)
+    print("Bullshit after...")
     print("Name: "+str(name))
     print("Here is the struct format: "+str(struct_format))
     print("Here is the fields: "+str(fields))
@@ -102,20 +115,25 @@ def to_unsigned(byte_integer: int) -> int: # Converts a signed integer in a sing
 
     while True:
 
-        if line_ind == len(lines):
-            code = gen_python_code(str(struct_format), str(fields), name_of_rec, str(has_variable))
-            save_code(code)
-            output += code + "\n\n" # Add a couple of newlines just to be safe
-            break
+
         line = lines[line_ind]
         tok = line.split(" ")
+        
+        
+        name = None
+
         if line == "3 Structure Examples":
             code = gen_python_code(str(struct_format), str(fields), name_of_rec, str(has_variable))
             save_code(code)
             output += code + "\n\n" # Add a couple of newlines just to be safe
             break
+
+        if line_ind == len(lines):
+            code = gen_python_code(str(struct_format), str(fields), name_of_rec, str(has_variable))
+            save_code(code)
+            output += code + "\n\n" # Add a couple of newlines just to be safe
+            break
         
-        name = None
         # Process the header line by line
         #for line in header.splitlines():
 
@@ -165,7 +183,7 @@ def to_unsigned(byte_integer: int) -> int: # Converts a signed integer in a sing
                 
                 # Checks for the type line.
                 # Now check for the thing. This is to fix the situation when there is a description about some other structure before the next record type recorded. Therefore this prevents invalid output...
-                if "Type (4 bytes)" in line:
+                if "Type (4 bytes)" in line and struct_format != []:
                     code = gen_python_code(str(struct_format), str(fields), name_of_rec, str(has_variable))
                     output += code + "\n\n" # Add a couple of newlines just to be safe
                     # print("output shit: "+str(output))

@@ -1,13 +1,11 @@
-
-
 # This wasn't in the specific format which this script expects. Just add it here....
 
 
 class EMR_SAVEDC:
-    format = []
+    format = ["4b", "4b"]
     name = "EMR_SAVEDC"
     has_variable = False
-    fields = [] # These are the fields of this object.
+    fields = ["Type", "Size"] # These are the fields of this object.
     def __init__(self, data):
         unpacked = []
         for f in self.format:
@@ -59,4 +57,3 @@ class EMR_SAVEDC:
             field_bytes = field_integer.to_bytes(field_length, byteorder='little') # num.to_bytes(4, byteorder='little')
             out += field_bytes # Add the actual value to the output
         return out # Return the output bytes
-
