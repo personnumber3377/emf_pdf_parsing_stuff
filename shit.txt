@@ -1,0 +1,85 @@
+2.3.4.1 EMR_EOF Record
+The EMR_EOF record indicates the end of the metafile and specifies a palette.
+Fields not specified in this section are specified in section 2.3.4.
+0 1 2 3 4 5 6 7 8 9
+1
+0 1 2 3 4 5 6 7 8 9
+2
+0 1 2 3 4 5 6 7 8 9
+3
+0 1
+Type
+Size
+nPalEntries
+offPalEntries
+PaletteBuffer (variable, optional)
+...
+SizeLast
+Type (4 bytes): An unsigned integer that identifies this record type as EMR_EOF. This value is
+0x0000000E.
+nPalEntries (4 bytes): An unsigned integer that specifies the number of palette entries.
+offPalEntries (4 bytes): An unsigned integer that specifies the offset to the palette entries from the
+start of this record.
+PaletteBuffer (variable, optional): An array of bytes that contains palette data, which is not
+required to be contiguous with the fixed-length portion of the EMR_EOF record. Thus, fields in this
+buffer that are labeled "UndefinedSpace" are optional and MUST be ignored.
+0 1 2 3 4 5 6 7 8 9
+1
+0 1 2 3 4 5 6 7 8 9
+2
+0 1 2 3 4 5 6 7 8 9
+3
+0 1
+UndefinedSpace1 (variable, optional)
+...
+117 / 282
+[MS-EMF] - v20240423
+Enhanced Metafile Format
+Copyright © 2024 Microsoft Corporation
+Release: April 23, 2024
+PaletteEntries (variable)
+...
+UndefinedSpace2 (variable, optional)
+...
+PaletteEntries (variable): An array of LogPaletteEntry objects (section 2.2.18) that specifies the
+palette data.
+SizeLast (4 bytes): An unsigned integer that MUST be the same as Size and MUST be the last field
+of the record and hence the metafile. LogPaletteEntry objects, if they exist, MUST precede this
+field.
+See section 2.3.4 for more control record types.
+2.3.4.2 EMR_HEADER Record Types
+The EMR_HEADER record is the starting point of an EMF metafile. It specifies properties of the
+device on which the image in the metafile was recorded; this information in the header record makes
+it possible for EMF metafiles to be independent of any specific output device.
+The following are the EMR_HEADER record types.
+Name Section Description
+EmfMetafileHeader 2.3.4.2.1 The original EMF header record.
+EmfMetafileHeaderExtension1 2.3.4.2.2 The header record defined in the first extension to EMF, which added
+support for OpenGL records and an optional internal pixel format
+descriptor.<62>
+EmfMetafileHeaderExtension2 2.3.4.2.3 The header record defined in the second extension to EMF, which
+added the capability of measuring display dimensions in
+micrometers.<63>
+EMF metafiles SHOULD be created with an EmfMetafileHeaderExtension2 header record.
+The generic structure of EMR_HEADER records is specified as follows.
+Fields not specified in this section are specified in section 2.3.4.
+0 1 2 3 4 5 6 7 8 9
+1
+0 1 2 3 4 5 6 7 8 9
+2
+0 1 2 3 4 5 6 7 8 9
+3
+0 1
+Type
+Size
+EmfHeader (80 bytes)
+...
+...
+118 / 282
+[MS-EMF] - v20240423
+Enhanced Metafile Format
+Copyright © 2024 Microsoft Corporation
+Release: April 23, 2024
+...
+EmfHeaderRecordBuffer (variable, optional)
+...

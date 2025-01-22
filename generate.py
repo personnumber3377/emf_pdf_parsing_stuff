@@ -1,99 +1,109 @@
+
 import re
+import os
 
 # This code is based on an earlier implementation of a thing.
 
-def gen_python_code(struct_format, fields):
+def gen_python_code(struct_format, fields, name, has_variable):
     fh = open("template.py", "r")
     data = fh.read()
     fh.close()
     # 
+    assert fields != "[]" or has_variable
+    #assert fields != [] or has_variable
     # STRUCT_FORMAT is struct_format and FIELDS is fields in the template.
     data = data.replace("STRUCT_FORMAT", struct_format)
     data = data.replace("FIELDS", fields)
+    data = data.replace("NAME", name)
+    data = data.replace("HAS_VARIABLE", has_variable)
     return data
 
-def c_header_to_python(header):
-    # Mapping of C types to struct format characters
-    type_mapping = {
-        # Integer types
-        "BYTE": "1b",         # Unsigned 1 byte
-        "CHAR": "1b",         # Signed 1 byte
-        "UCHAR": "1b",        # Unsigned 1 byte
-        "SHORT": "2b",        # Signed 2 bytes
-        "USHORT": "2b",       # Unsigned 2 bytes
-        "WORD": "2b",         # Unsigned 2 bytes (Windows-specific)
-        "INT": "4b",          # Signed 4 bytes
-        "UINT": "4b",         # Unsigned 4 bytes
-        "LONG": "4b",         # Signed 4 bytes
-        "ULONG": "4b",        # Unsigned 4 bytes
-        "DWORD": "4b",        # Unsigned 4 bytes (Windows-specific)
-        "LONGLONG": "8b",     # Signed 8 bytes
-        "ULONGLONG": "8b",    # Unsigned 8 bytes
-        "SIZE_T": "8b",       # Platform-dependent size type (64-bit here)
+def save_code(code_string):
+    fh = open("output.py", "a")
+    fh.write(code_string)
+    fh.write("\n\n\n") # Add a bit of this.
+    fh.close()
 
-        # Floating-point types
-        "FLOAT": "4b",        # 4 bytes
-        "DOUBLE": "8b",       # 8 bytes
+def spec_to_python(contents):
+    # field_regex = re.compile(r"(\w+)\s+(\w+);")
+    record_regex = re.compile(r"^\d+\.\d+\.\d+\.\d+ \S+ Record$")
+    bytes_field_regex = re.compile(r'\w+\s\(\d+\sbytes\):') # This is for fixed length fields...
+    variable_field_regex = re.compile(r'\w+\s\(variable\):') # This is for fixed length fields...
 
-        # Character types
-        "TCHAR": "1b",        # 1 character (use Unicode-specific mappings if needed)
-        "WCHAR": "2b",        # 2 bytes (Unicode character)
-        "CHAR16": "2b",       # UTF-16 2-byte character
-        "CHAR32": "4b",       # UTF-32 4-byte character
+    lines = contents.splitlines()
+    line_ind = 0
+    in_rec = False
 
-        # Composite types
-        "RECTL": "16b",       # Rectangle (4 signed LONGs, 4 bytes each = 16 bytes)
-        "SIZEL": "8b",        # Size (2 signed LONGs, 4 bytes each = 8 bytes)
-        "POINTL": "8b",       # Point (2 signed LONGs, 4 bytes each = 8 bytes)
-        "RECT": "16b",        # Rectangle structure (4 signed LONGs = 16 bytes)
-        "SIZE": "8b",         # Size structure (2 signed LONGs = 8 bytes)
-        "POINT": "8b",        # Point structure (2 signed LONGs = 8 bytes)
-
-        # Boolean types
-        "BOOL": "4b",         # 4 bytes (commonly used in Windows)
-        "BOOLEAN": "1b",      # 1 byte (commonly used in Unix)
-
-        # Special types
-        "HANDLE": "8b",       # Pointer to a handle (platform-dependent size, 64-bit assumed)
-        "LPVOID": "8b",       # Void pointer (platform-dependent size, 64-bit assumed)
-        "LPSTR": "8b",        # Pointer to a string
-        "LPCSTR": "8b",       # Pointer to a constant string
-        "LPWSTR": "8b",       # Pointer to a wide string
-        "LPCWSTR": "8b",      # Pointer to a constant wide string
-
-        # Unix-specific
-        "int8_t": "1b",       # Signed 1 byte
-        "uint8_t": "1b",      # Unsigned 1 byte
-        "int16_t": "2b",      # Signed 2 bytes
-        "uint16_t": "2b",     # Unsigned 2 bytes
-        "int32_t": "4b",      # Signed 4 bytes
-        "uint32_t": "4b",     # Unsigned 4 bytes
-        "int64_t": "8b",      # Signed 8 bytes
-        "uint64_t": "8b",     # Unsigned 8 bytes
-        "pid_t": "4b",        # Process ID type (usually 4 bytes)
-        "off_t": "8b",        # File offset type (usually 8 bytes)
-        "time_t": "8b",       # Time type (signed 8 bytes)
-        "ssize_t": "8b",      # Signed size type (usually 8 bytes)
-        "size_t": "8b",       # Unsigned size type (usually 8 bytes)
-        "uid_t": "4b",        # User ID (usually 4 bytes)
-        "gid_t": "4b",        # Group ID (usually 4 bytes)
-
-        # Pointers
-        "void*": "8b",        # Generic pointer (platform-dependent size, 64-bit assumed)
-        "char*": "8b",        # Pointer to a character array
-        "int*": "8b",         # Pointer to an integer
-        "float*": "8b",       # Pointer to a float
-        "double*": "8b",      # Pointer to a double
-    }
-
-    # Regular expression to match C-style fields
-    field_regex = re.compile(r"(\w+)\s+(\w+);")
+    has_variable = False # This signifies if the record type has variable field at the end of it...
+    name_of_rec = None
     struct_format = [] # ""
     fields = []
 
-    # Process the header line by line
-    for line in header.splitlines():
-        match = field_regex.search(line)
+    # This part doesn't work for "2.3.4.2 EMR_HEADER Record Types" because reasons...
+
+    output = "" # Final output code...
+
+
+    while True:
+
+        if line_ind == len(lines):
+            code = gen_python_code(str(struct_format), str(fields), name_of_rec, str(has_variable))
+            save_code(code)
+            output += code + "\n\n" # Add a couple of newlines just to be safe
+            break
+        line = lines[line_ind]
+        tok = line.split(" ")
+        if line == "3 Structure Examples":
+            code = gen_python_code(str(struct_format), str(fields), name_of_rec, str(has_variable))
+            save_code(code)
+            output += code + "\n\n" # Add a couple of newlines just to be safe
+            break
+        
+        name = None
+        # Process the header line by line
+        #for line in header.splitlines():
+
+        # match = field_regex.search(line)
+        if not in_rec: # Not in record yet. Check if we have encountered a record section:
+            if record_regex.search(line): # There exists a match
+                print("This line has the thing:"+str(line))
+                in_rec = True
+                name_of_rec = tok[-2] # Second last.
+                print("Name of rec: "+str(name_of_rec))
+
+        else: # In record..., therefore check if the thing has a field in it.
+            if record_regex.search(line): # There exists a match
+                # We have encountered a new record type. Save the old one as a parser and be done with it.
+                print("oof")
+                # Save the shit here..
+                print("Name of reeeeeeeeeeec: "+str(name_of_rec))
+                # assert False
+                code = gen_python_code(str(struct_format), str(fields), name_of_rec, str(has_variable))
+                output += code + "\n\n" # Add a couple of newlines just to be safe
+                print("output shit: "+str(output))
+                save_code(code)
+                name_of_rec = tok[-2] # Second last.
+                struct_format = [] # ""
+                fields = []
+                has_variable = False
+                print("Name of rec: "+str(name_of_rec))
+
+            elif len(line) >= len("2.3.4.2") and line[1] == "." and line[3] == "." and line[5] == ".": # This is to fix the bug in the parser when it encounters "2.3.4.2 EMR_HEADER Record Types"
+                in_rec = False
+            else:
+                # Checks for the type line.
+                if bytes_field_regex.search(line):
+                    # A fixed length field.
+                    
+                    length = int(tok[1][1:])
+                    print("Length: "+str(length))
+                    struct_format.append(str(length)+"b") # b for bytes.
+                    print("Here is a field: "+str(tok[0]))
+                    fields.append(tok[0])
+                elif variable_field_regex.search(line):
+                    has_variable = True # Add variable stuff.
+
+        '''
         if match:
             c_type, field_name = match.groups()
             if c_type in type_mapping:
@@ -103,66 +113,39 @@ def c_header_to_python(header):
             else:
                 raise ValueError(f"Unknown type: {c_type}")
 
-    # Generate Python code
-    '''
-    python_code = f"""import struct
+        # Generate python code.
 
-class EMFHeader:
-    format = '{struct_format}'
-
-    def __init__(self, data):
-        unpacked = struct.unpack(self.format, data)
-        fields = {fields}
-        for field, value in zip(fields, unpacked):
-            setattr(self, field, value)
-
-    @classmethod
-    def from_file(cls, filename):
-        with open(filename, 'rb') as f:
-            data = f.read(struct.calcsize(cls.format))
-            return cls(data)
-"""
-    '''
-
-    python_code = gen_python_code(str(struct_format), str(fields))
-    return python_code
-
-'''
-# Example usage
-c_header = """
-DWORD   iType;
-DWORD   nSize;
-RECTL   rclBounds;
-RECTL   rclFrame;
-DWORD   dSignature;
-DWORD   nVersion;
-DWORD   nBytes;
-DWORD   nRecords;
-WORD    nHandles;
-WORD    sReserved;
-DWORD   nDescription;
-DWORD   offDescription;
-DWORD   nPalEntries;
-SIZEL   szlDevice;
-SIZEL   szlMillimeters;
-"""
-'''
-#generated_code = c_header_to_python(c_header)
-#print(generated_code)
+        python_code = gen_python_code(str(struct_format), str(fields))
+        return python_code
+        '''
 
 
-def gen_header(filename: str) -> None:
+        # Increment line counter...
+        line_ind += 1
+    return output
+
+
+def gen_parsers(filename: str) -> None:
     fh = open(filename, "r")
     data = fh.read()
     fh.close()
-    print(c_header_to_python(data))
+    print(spec_to_python(data))
     return
+
+
+def main() -> int:
+    if len(sys.argv) != 2:
+        print("Usage: "+str(sys.argv[0])+" INPUT_CONTENTS_FILE")
+        exit(0)
+    # Delete the old stuff.
+    os.system("rm output.py")
+    gen_parsers(sys.argv[1])
+    return 0
+
 
 import sys
 
 if __name__=="__main__":
-    if len(sys.argv) != 2:
-        print("Usage: "+str(sys.argv[0])+" INPUT_C_HEADER_FILE")
-        exit(0)
-    gen_header(sys.argv[1])
-    exit(0)
+    ret = main()
+
+    exit(ret)

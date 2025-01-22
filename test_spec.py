@@ -7,16 +7,16 @@ def to_unsigned(byte_integer: int) -> int: # Converts a signed integer in a sing
         byte_integer += 256
     return byte_integer
 
-class NAME:
-    format = STRUCT_FORMAT
-    name = "NAME"
-    has_variable = HAS_VARIABLE
+class EMR_EOF:
+    format = ['4b', '4b', '4b', '4b']
+    name = "EMR_EOF"
+    has_variable = True
     def __init__(self, data):
         unpacked = []
         for f in self.format:
             unpacked.append(struct.unpack(f, data[:struct.calcsize(f)]))
             data = data[struct.calcsize(f):]
-        fields = FIELDS
+        fields = ['Type', 'nPalEntries', 'offPalEntries', 'SizeLast']
         print("unpacked: ")
         print(unpacked)
         for field, value in zip(fields, unpacked):
@@ -47,12 +47,12 @@ class NAME:
             return cls(data)
 
     def __repr__(self):
-        fields = FIELDS
+        fields = ['Type', 'nPalEntries', 'offPalEntries', 'SizeLast']
         parsed_fields = {field: getattr(self, field) for field in fields}
-        return f"<NAME {parsed_fields}, Remaining: {len(self.remaining_data)} bytes>"
+        return f"<EMR_EOF {parsed_fields}, Remaining: {len(self.remaining_data)} bytes>"
 
     def serialize(self):
-        fields = FIELDS # These are the fields of this object.
+        fields = ['Type', 'nPalEntries', 'offPalEntries', 'SizeLast'] # These are the fields of this object.
         out = b"" # Initialize empty bytes output
         for i, format_string in enumerate(self.format):
             # The corresponding field is fields[i]
@@ -65,3 +65,5 @@ class NAME:
             field_bytes = field_integer.to_bytes(field_length, byteorder='little') # num.to_bytes(4, byteorder='little')
             out += field_bytes # Add the actual value to the output
         return out # Return the output bytes
+
+
