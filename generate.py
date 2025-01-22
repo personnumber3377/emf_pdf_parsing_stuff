@@ -4,6 +4,42 @@ import os
 
 # This code is based on an earlier implementation of a thing.
 
+has_start = False
+
+def fixup_stuff(struct_format, fields): # This looks at the struct format and fields and sees if there is the Type or Size field and then puts them at the start.
+    struct_format = eval(struct_format) # Obvious possible command injection, but idc
+    fields = eval(fields) # Same here too.
+
+    assert isinstance(struct_format, list)
+    assert isinstance(fields, list)
+
+    assert len(struct_format) == len(fields)
+    print("Fields before: "+str(fields))
+    if "Type" in fields:
+        # Remove the Type and the corresponding struct thing
+        ind = fields.index("Type")
+        # Remove.
+        fields.pop(ind)
+        struct_format.pop(ind)
+    # Do the same for "Size"
+    if "Size" in fields:
+        # Remove the Type and the corresponding struct thing
+        ind = fields.index("Size")
+        # Remove.
+        fields.pop(ind)
+        struct_format.pop(ind)
+    
+    print("Fields after: "+str(fields))
+
+    assert len(struct_format) == len(fields)
+    assert "Size" not in fields and "Type" not in fields
+    # Now add them to the start, since each record is guaranteed to have these fields at the start.
+    fields = ["Type", "Size"] + fields # Add the two stuff.
+    struct_format = ["4b", "4b"] + struct_format # Add the two integer fields
+
+
+    return str(struct_format), str(fields)
+
 def gen_python_code(struct_format, fields, name, has_variable):
     fh = open("template.py", "r")
     data = fh.read()
@@ -12,6 +48,11 @@ def gen_python_code(struct_format, fields, name, has_variable):
     assert fields != "[]" or has_variable
     #assert fields != [] or has_variable
     # STRUCT_FORMAT is struct_format and FIELDS is fields in the template.
+
+    struct_format, fields = fixup_stuff(struct_format, fields)
+    print("Name: "+str(name))
+    print("Here is the struct format: "+str(struct_format))
+    print("Here is the fields: "+str(fields))
     data = data.replace("STRUCT_FORMAT", struct_format)
     data = data.replace("FIELDS", fields)
     data = data.replace("NAME", name)
@@ -25,6 +66,21 @@ def save_code(code_string):
     fh.close()
 
 def spec_to_python(contents):
+    global has_start
+    if not has_start:
+        fh = open("output.py", "a")
+        fh.write('''import struct
+
+def to_unsigned(byte_integer: int) -> int: # Converts a signed integer in a single byte to an unsigned integer.
+    # assert byte_integer >= 0 and byte_integer <= 255
+    assert byte_integer >= -128 and byte_integer <= 127
+    if byte_integer < 0:
+        byte_integer += 256
+    return byte_integer
+''')
+        fh.write("\n\n")
+        fh.close()
+        has_start = True
     # field_regex = re.compile(r"(\w+)\s+(\w+);")
     record_regex = re.compile(r"^\d+\.\d+\.\d+\.\d+ \S+ Record$")
     bytes_field_regex = re.compile(r'\w+\s\(\d+\sbytes\):') # This is for fixed length fields...
@@ -66,39 +122,54 @@ def spec_to_python(contents):
         # match = field_regex.search(line)
         if not in_rec: # Not in record yet. Check if we have encountered a record section:
             if record_regex.search(line): # There exists a match
-                print("This line has the thing:"+str(line))
+                # print("This line has the thing:"+str(line))
                 in_rec = True
                 name_of_rec = tok[-2] # Second last.
-                print("Name of rec: "+str(name_of_rec))
+                # print("Name of rec: "+str(name_of_rec))
 
         else: # In record..., therefore check if the thing has a field in it.
             if record_regex.search(line): # There exists a match
                 # We have encountered a new record type. Save the old one as a parser and be done with it.
-                print("oof")
+                # print("oof")
                 # Save the shit here..
-                print("Name of reeeeeeeeeeec: "+str(name_of_rec))
+                # print("Name of reeeeeeeeeeec: "+str(name_of_rec))
                 # assert False
                 code = gen_python_code(str(struct_format), str(fields), name_of_rec, str(has_variable))
                 output += code + "\n\n" # Add a couple of newlines just to be safe
-                print("output shit: "+str(output))
+                # print("output shit: "+str(output))
                 save_code(code)
                 name_of_rec = tok[-2] # Second last.
                 struct_format = [] # ""
                 fields = []
                 has_variable = False
-                print("Name of rec: "+str(name_of_rec))
+                # print("Name of rec: "+str(name_of_rec))
 
-            elif len(line) >= len("2.3.4.2") and line[1] == "." and line[3] == "." and line[5] == ".": # This is to fix the bug in the parser when it encounters "2.3.4.2 EMR_HEADER Record Types"
+            elif len(line) >= len("2.3.4.2") and line[1] == "." and line[3] == "." and line[5] == "." and "Record Types" in line: # This is to fix the bug in the parser when it encounters "2.3.4.2 EMR_HEADER Record Types"
+                print("Not in record.")
+                print("Previous record name: "+str(name_of_rec))
                 in_rec = False
+
+
+                # Maybe this bullshit here?????
+                code = gen_python_code(str(struct_format), str(fields), name_of_rec, str(has_variable))
+                output += code + "\n\n" # Add a couple of newlines just to be safe
+                # print("output shit: "+str(output))
+                save_code(code)
+                name_of_rec = tok[-2] # Second last.
+                struct_format = [] # ""
+                fields = []
+                has_variable = False
+
+
             else:
                 # Checks for the type line.
                 if bytes_field_regex.search(line):
                     # A fixed length field.
                     
                     length = int(tok[1][1:])
-                    print("Length: "+str(length))
+                    # print("Length: "+str(length))
                     struct_format.append(str(length)+"b") # b for bytes.
-                    print("Here is a field: "+str(tok[0]))
+                    # print("Here is a field: "+str(tok[0]))
                     fields.append(tok[0])
                 elif variable_field_regex.search(line):
                     has_variable = True # Add variable stuff.
@@ -125,11 +196,21 @@ def spec_to_python(contents):
     return output
 
 
+def save_manual_input(): # This function is here because some records aren't documented in the PDF in the format this autogenerator expects. This causes the parser to miss some record types. These types are manually programmed in manual.py
+    fh = open("manual.py")
+    data = fh.read()
+    fh.close()
+    save_code(data)
+    return
+
+
 def gen_parsers(filename: str) -> None:
     fh = open(filename, "r")
     data = fh.read()
     fh.close()
     print(spec_to_python(data))
+    # Save the manual shit....
+    save_manual_input()
     return
 
 

@@ -1,9 +1,13 @@
-class NAME:
-    format = STRUCT_FORMAT
-    name = "NAME"
-    has_variable = HAS_VARIABLE
-    fields = FIELDS # These are the fields of this object.
-    variable_data = None
+
+
+# This wasn't in the specific format which this script expects. Just add it here....
+
+
+class EMR_SAVEDC:
+    format = []
+    name = "EMR_SAVEDC"
+    has_variable = False
+    fields = [] # These are the fields of this object.
     def __init__(self, data):
         unpacked = []
         for f in self.format:
@@ -26,18 +30,11 @@ class NAME:
                 setattr(self, field, (len(b), integer))
             else:
                 value = to_unsigned(value)
-                assert value >= 0 and value <= 255 
+                assert value >= 0 and value <= 255
                 setattr(self, field, (1, value)) # Size of one byte
         self.remaining_data = data[struct.calcsize("".join(self.format)):]
         print("Here is the size thing: "+str(struct.calcsize("".join(self.format))))
         # return self.remaining_data # Return the remaining data after reading the header.
-        # Sanity checking. If the record doesn't have variable fields, then all of the data should be consumed. Otherwise this is an error condition.
-        if not self.has_variable and self.remaining_data: # There is left over data even though record should not be variable.
-            assert False
-        if self.has_variable:
-            # Set the variable data.
-            self.variable_data = self.remaining_data # The variable data should be the data at the end. This actually may be b"" for optional fields...
-
 
     @classmethod
     def from_file(cls, filename):
@@ -47,7 +44,7 @@ class NAME:
 
     def __repr__(self):
         parsed_fields = {field: getattr(self, field) for field in self.fields}
-        return f"<NAME {parsed_fields}, Remaining: {len(self.remaining_data)} bytes>"
+        return f"<EMR_SAVEDC {parsed_fields}, Remaining: {len(self.remaining_data)} bytes>"
 
     def serialize(self):
         out = b"" # Initialize empty bytes output
@@ -61,11 +58,5 @@ class NAME:
             # field_bytes = struct.pack(format_string, field_val)
             field_bytes = field_integer.to_bytes(field_length, byteorder='little') # num.to_bytes(4, byteorder='little')
             out += field_bytes # Add the actual value to the output
-        if self.has_variable:
-            # Add variable data to the end.
-            out += self.variable_data
-        # Sanity checking. The "Size" field should actually match the size upon serialization. If not, then the mutator did not take care of the size correctly and there is a bug in the mutator.
-        assert self.Size == len(out)
         return out # Return the output bytes
-
 
