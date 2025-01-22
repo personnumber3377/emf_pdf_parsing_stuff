@@ -11,15 +11,15 @@ class NAME:
     format = STRUCT_FORMAT
     name = "NAME"
     has_variable = HAS_VARIABLE
+    fields = FIELDS # These are the fields of this object.
     def __init__(self, data):
         unpacked = []
         for f in self.format:
             unpacked.append(struct.unpack(f, data[:struct.calcsize(f)]))
             data = data[struct.calcsize(f):]
-        fields = FIELDS
         print("unpacked: ")
         print(unpacked)
-        for field, value in zip(fields, unpacked):
+        for field, value in zip(self.fields, unpacked):
             print("value == "+str(value))
             if isinstance(value, tuple): # This is a multibyte value.
                 # Should be integers all
@@ -47,16 +47,14 @@ class NAME:
             return cls(data)
 
     def __repr__(self):
-        fields = FIELDS
-        parsed_fields = {field: getattr(self, field) for field in fields}
+        parsed_fields = {field: getattr(self, field) for field in self.fields}
         return f"<NAME {parsed_fields}, Remaining: {len(self.remaining_data)} bytes>"
 
     def serialize(self):
-        fields = FIELDS # These are the fields of this object.
         out = b"" # Initialize empty bytes output
         for i, format_string in enumerate(self.format):
             # The corresponding field is fields[i]
-            field_name = fields[i]
+            field_name = self.fields[i]
             field_val = getattr(self, field_name) # Get the actual value of the field from this object.
             field_length = field_val[0]
             field_integer = field_val[1]

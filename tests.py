@@ -17,6 +17,11 @@ def dprint(string): # Debug print here...
 		print("[DEBUG] "+str(string))
 	return
 
+def good(string):
+	if DEBUG:
+		print("[+] "+str(string))
+	return
+
 
 def write_to_test_spec_and_import(contents): # This writes the data to a file called test_spec.py which is then imported in the tests and then the contents are checked for something in the test functions. After this the data is imported into this python file.
 	global cur_module
@@ -52,7 +57,10 @@ def test_overrun_stuff():
 	bytes_data = parse_hex_dump(EMR_EOF_DUMP)
 	eof_obj = cur_module.EMR_EOF(bytes_data)
 	# Now check for the fields part.
-	assert 
+	# assert 
+	print(eof_obj.fields)
+	assert eof_obj.fields == ['Type', 'nPalEntries', 'offPalEntries', 'SizeLast'] # The fields should be these.
+	good("test_overrun_stuff passed!")
 	return
 
 def run_tests():
