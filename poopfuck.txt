@@ -28,7 +28,7 @@ class EMR_COMMENT:
                 value = to_unsigned(value)
                 assert value >= 0 and value <= 255 
                 setattr(self, field, (1, value)) # Size of one byte
-        self.remaining_data = data[struct.calcsize("".join(self.format)):]
+        self.remaining_data = data # data[struct.calcsize("".join(self.format)):] # We do not need to do this here because we did this earlier.
         #print("Here is the size thing: "+str(struct.calcsize("".join(self.format))))
         # return self.remaining_data # Return the remaining data after reading the header.
         # Sanity checking. If the record doesn't have variable fields, then all of the data should be consumed. Otherwise this is an error condition.
@@ -64,11 +64,14 @@ class EMR_COMMENT:
             # field_bytes = struct.pack(format_string, field_val)
             field_bytes = field_integer.to_bytes(field_length, byteorder='little') # num.to_bytes(4, byteorder='little')
             out += field_bytes # Add the actual value to the output
+        if self.variable_data:
+            print("Length of variable data: "+str(len(self.variable_data)))
+            print("Variable data: "+str(self.variable_data))
         if self.has_variable:
             # Add variable data to the end.
             out += self.variable_data
         # Sanity checking. The "Size" field should actually match the size upon serialization. If not, then the mutator did not take care of the size correctly and there is a bug in the mutator.
-        assert self.Size == len(out)
+        assert self.Size[1] == len(out)
         return out # Return the output bytes
 
 
