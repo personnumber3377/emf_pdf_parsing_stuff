@@ -32,15 +32,25 @@ class EMR_COMMENT:
         #print("Here is the size thing: "+str(struct.calcsize("".join(self.format))))
         # return self.remaining_data # Return the remaining data after reading the header.
         # Sanity checking. If the record doesn't have variable fields, then all of the data should be consumed. Otherwise this is an error condition.
-        print("Here is self.name: "+str(self.name))
-        print("Here is self.has_variable: "+str(self.has_variable))
-        print("Here is self.remaining_data: "+str(self.remaining_data))
+        #print("Here is self.name: "+str(self.name))
+        #print("Here is self.has_variable: "+str(self.has_variable))
+        #print("Here is self.remaining_data: "+str(self.remaining_data))
         if not self.has_variable and self.remaining_data: # There is left over data even though record should not be variable.
             assert False
         if self.has_variable:
             # Set the variable data.
             self.variable_data = self.remaining_data # The variable data should be the data at the end. This actually may be b"" for optional fields...
 
+    def mutable_fields(self) -> list:
+        # This method returns the fields which do NOT contain the type or size fields.
+        assert "Type" in self.fields
+        assert "Size" in self.fields
+        o = self.fields # Now try to do the thing.
+        o.remove("Type")
+        o.remove("Size")
+        assert "Type" not in self.fields
+        assert "Size" not in self.fields
+        return 0
 
     @classmethod
     def from_file(cls, filename):
@@ -64,9 +74,9 @@ class EMR_COMMENT:
             # field_bytes = struct.pack(format_string, field_val)
             field_bytes = field_integer.to_bytes(field_length, byteorder='little') # num.to_bytes(4, byteorder='little')
             out += field_bytes # Add the actual value to the output
-        if self.variable_data:
-            print("Length of variable data: "+str(len(self.variable_data)))
-            print("Variable data: "+str(self.variable_data))
+        #if self.variable_data:
+        #    print("Length of variable data: "+str(len(self.variable_data)))
+        #    print("Variable data: "+str(self.variable_data))
         if self.has_variable:
             # Add variable data to the end.
             out += self.variable_data
